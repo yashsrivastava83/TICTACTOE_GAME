@@ -1,0 +1,102 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class TicTacToe extends JFrame implements ActionListener {
+    public static final int BOARD_SIZE = 3;
+    public enum GameStatus { Incomplete, Xwins, Owins, Tie }
+    
+    private JButton[][] buttons = new JButton[BOARD_SIZE][BOARD_SIZE];
+    private boolean crossTurn = true;
+
+    public TicTacToe() {
+        super("Tic-Tac-Toe");
+        setSize(800, 800);
+        setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        Font font = new Font(Font.SANS_SERIF, Font.BOLD, 100);
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
+                buttons[row][col] = new JButton("");
+                buttons[row][col].setFont(font);
+                buttons[row][col].addActionListener(this);
+                add(buttons[row][col]);
+            }
+        }
+
+        setResizable(false);
+        setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        JButton clickedButton = (JButton) e.getSource();
+        if (!clickedButton.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Invalid Move!");
+            return;
+        }
+
+        clickedButton.setText(crossTurn ? "X" : "O");
+        crossTurn = !crossTurn;
+
+        GameStatus status = getGameStatus();
+        if (status == GameStatus.Incomplete) return;
+
+        declareWinner(status);
+        int choice = JOptionPane.showConfirmDialog(this, "Do you want to play again?");
+        if (choice == JOptionPane.YES_OPTION) {
+            resetBoard();
+        } else {
+            dispose();
+        }
+    }
+
+    private void declareWinner(GameStatus status) {
+        String message = switch (status) {
+            case Xwins -> "X Wins!";
+            case Owins -> "O Wins!";
+            default -> "It's a Tie!";
+        };
+        JOptionPane.showMessageDialog(this, message);
+    }
+
+    private void resetBoard() {
+        for (JButton[] row : buttons)
+            for (JButton btn : row)
+                btn.setText("");
+        crossTurn = true;
+    }
+
+    private GameStatus getGameStatus() {
+        // Check Rows & Columns
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            if (checkLine(buttons[i][0], buttons[i][1], buttons[i][2])) return winner(buttons[i][0]);
+            if (checkLine(buttons[0][i], buttons[1][i], buttons[2][i])) return winner(buttons[0][i]);
+        }
+        
+        // Check Diagonals
+        if (checkLine(buttons[0][0], buttons[1][1], buttons[2][2])) return winner(buttons[0][0]);
+        if (checkLine(buttons[0][2], buttons[1][1], buttons[2][0])) return winner(buttons[0][2]);
+
+        // Check for Incomplete
+        for (JButton[] row : buttons)
+            for (JButton btn : row)
+                if (btn.getText().isEmpty()) return GameStatus.Incomplete;
+
+        return GameStatus.Tie;
+    }
+
+    private boolean checkLine(JButton b1, JButton b2, JButton b3) {
+        return !b1.getText().isEmpty() && b1.getText().equals(b2.getText()) && b2.getText().equals(b3.getText());
+    }
+
+    private GameStatus winner(JButton btn) {
+        return btn.getText().equals("X") ? GameStatus.Xwins : GameStatus.Owins;
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(TicTacToe::new);
+    }
+}
